@@ -2522,3 +2522,78 @@ index be578a0bb..ce5e8b400 100644
 +#if !defined(__GLIBC__) && !defined(__ANDROID__)
  // Alpine doesn't know these types, define them
  typedef unsigned int       __uint32_t;
+diff --git a/src/java.base/share/classes/jdk/internal/loader/ClassLoaders.java b/src/java.base/share/classes/jdk/internal/loader/ClassLoaders.java
+index 75922c34e..1903b1100 100644
+--- a/src/java.base/share/classes/jdk/internal/loader/ClassLoaders.java
++++ b/src/java.base/share/classes/jdk/internal/loader/ClassLoaders.java
+@@ -28,4 +28,5 @@ package jdk.internal.loader;
+ import java.io.IOException;
+ import java.net.URL;
++import java.net.URLClassLoader;
+ import java.nio.file.InvalidPathException;
+ import java.nio.file.Path;
+@@ -55,4 +56,5 @@ public class ClassLoaders {
+     private static final PlatformClassLoader PLATFORM_LOADER;
+     private static final AppClassLoader APP_LOADER;
++    private static final BackCompatClassLoader BACK_COMPAT_CLASS_LOADER;
+ 
+     // Sets the ServicesCatalog for the specified loader using archived objects.
+@@ -99,4 +101,7 @@ public class ClassLoaders {
+             ArchivedClassLoaders.archive();
+         }
++
++        // For backcompat purposes with Java 8 and earlier, use an URLClassLoader
++        BACK_COMPAT_CLASS_LOADER = new BackCompatClassLoader(APP_LOADER);
+     }
+ 
+@@ -124,5 +129,6 @@ public class ClassLoaders {
+      */
+     public static ClassLoader appClassLoader() {
+-        return APP_LOADER;
++        //return APP_LOADER;
++        return BACK_COMPAT_CLASS_LOADER;
+     }
+ 
+@@ -140,4 +146,12 @@ public class ClassLoaders {
+             return JLA.findBootstrapClassOrNull(cn);
+         }
++
++        @Override
++        protected Class<?> loadClass(String cn, boolean resolve)
++            throws ClassNotFoundException
++        {
++            System.out.println("BootClassLoader.loadClass: " + cn);
++            return super.loadClass(cn, resolve);
++        }
+     };
+ 
+@@ -155,4 +169,12 @@ public class ClassLoaders {
+             super("platform", parent, null);
+         }
++
++        @Override
++        protected Class<?> loadClass(String cn, boolean resolve)
++            throws ClassNotFoundException
++        {
++            System.out.println("PlatformClassLoader.loadClass: " + cn);
++            return super.loadClass(cn, resolve);
++        }
+     }
+ 
+@@ -175,4 +197,5 @@ public class ClassLoaders {
+             throws ClassNotFoundException
+         {
++            System.out.println("AppClassLoader.loadClass: " + cn);
+             // for compatibility reasons, say where restricted package list has
+             // been updated to list API packages in the unnamed module.
+@@ -220,4 +243,10 @@ public class ClassLoaders {
+     }
+ 
++    private static class BackCompatClassLoader extends URLClassLoader {
++        BackCompatClassLoader(AppClassLoader parent) {
++            super(new URL[0], parent);
++        }
++    }
++
+     /**
+      * Attempts to convert the given string to a file URL.
