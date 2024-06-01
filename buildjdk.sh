@@ -48,7 +48,7 @@ else
   platform_args="SDKNAME=iphoneos --with-toolchain-type=clang"
   # --disable-precompiled-headers
   AUTOCONF_x11arg="--with-x=/opt/X11/include/X11 --prefix=/usr/lib"
-  sameflags="-arch arm64 -isysroot $thesysroot -DHEADLESS=1 -I$PWD/ios-missing-include -Wno-implicit-function-declaration"
+  sameflags="-arch arm64 -isysroot $thesysroot -DHEADLESS=1 -I$PWD/ios-missing-include -Wno-implicit-function-declaration -Wno-int-conversion"
   export CFLAGS+=" $sameflags"
   export CXXFLAGS="$sameflags"
 
